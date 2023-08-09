@@ -6,13 +6,13 @@ PLAYER_VIEW_BACKGROUND = '#ffffff'
 WINDOW_HEIGHT = 800
 WINDOW_WIDTH = 1000
 TOP_HEIGHT = 250
-BOTTOM_HEIGHT = 250
-LEFT_WIDTH = 300
-RIGHT_WIDTH = 300
+BOTTOM_HEIGHT = 300
+LEFT_WIDTH = 350
+RIGHT_WIDTH = 350
 CARDS_CSV = 'images/cards.csv'
 UNKNOWN_CARD_image_path = 'images/N.png'
-CARD_HEIGHT = 240
-CARD_WIDTH = 160
+CARD_HEIGHT = 150
+CARD_WIDTH = 100
 
 
 def init():
@@ -20,9 +20,4 @@ def init():
     UNKNOWN_CARD = ImageTk.PhotoImage(image=Image.open('images/N.png').resize(()))
 
 
-class PacketType(Enum):
-    LOGIN = 1
-    LOGIN_SUCCESS = 2
-    LOGIN_FAILED_NAME_ALREADY_EXISTS = 3
-    LOGIN_FAILED_GAME_STARTED = 4
-    PLAYER_LIST = 5
+

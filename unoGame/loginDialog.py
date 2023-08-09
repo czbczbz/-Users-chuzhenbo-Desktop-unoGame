@@ -3,11 +3,14 @@ import struct
 import tkinter as tk
 from tkinter import messagebox
 
-from constant import PacketType
+from protocal import PacketType, build_packet_header_client
 from player import Player
 
 
 class LoginDialog:
+    """
+    Login dialog class
+    """
     def __init__(self, client):
         self.client = client
         self.root = tk.Tk()
@@ -65,20 +68,24 @@ class LoginDialog:
         room_name = self.var_room.get()
         try:
             self.client.client_socket.connect((self.var_server_ip.get(), self.var_server_port.get()))
-            packet = struct.pack(f'>III{len(room_name)}s{len(player_name)}s', PacketType.LOGIN.value, len(room_name), len(player_name), room_name.encode('ASCII'), player_name.encode('ASCII'))
+            # packet = struct.pack(f'>III{len(room_name)}s{len(player_name)}s', PacketType.LOGIN.value, len(room_name), len(player_name), room_name.encode('ASCII'), player_name.encode('ASCII'))
+            packet = build_packet_header_client(PacketType.LOGIN.value, player_name, room_name)
             self.client.client_socket.send(packet)
             packet = self.client.client_socket.recv(1024)
             packet_type, is_admin = struct.unpack('>Ic', packet[:5])
             is_admin = is_admin == b'A'
-            print(packet_type, is_admin)
             if packet_type == PacketType.LOGIN_SUCCESS.value:
-                self.client.player = Player(self.var_player_name.get(), self.var_room.get(), self.client.client_socket, None,is_admin)
+                self.client.player = Player(self.var_player_name.get(), self.var_room.get(), self.client.client_socket, None, is_admin)
                 self.root.destroy()
             elif packet_type == PacketType.LOGIN_FAILED_GAME_STARTED.value:
                 messagebox.showerror(title='Error', message='The room has started the game')
                 return
             elif packet_type == PacketType.LOGIN_FAILED_NAME_ALREADY_EXISTS.value:
-                pass
+                messagebox.showerror(title='Error', message='The entered name already exists in the room')
+                return
+            elif packet_type == PacketType.ROOM_ALREADY_FULL.value:
+                messagebox.showerror(title='Error', message='The room is already full')
+                return
 
         except ConnectionRefusedError:
             messagebox.showerror(title='Error', message='Failed to connect to the server')
@@ -87,6 +94,10 @@ class LoginDialog:
             pass
 
     def check_server_ip(self):
+        """
+        Check whether the server address entered by the user is localhost or the correct ipv4 address
+        :return:
+        """
         ip = self.var_server_ip.get()
         if ip == 'localhost':
             return True
