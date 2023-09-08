@@ -12,6 +12,12 @@ class LoginDialog:
     Login dialog class
     """
     def __init__(self, client):
+        """
+        Login dialog initialization.
+        Pass in the client object so that  can modify the client object after successful login
+        :param client: the client object
+        """
+
         self.client = client
         self.root = tk.Tk()
         self.root.title('Login')
@@ -49,44 +55,62 @@ class LoginDialog:
         self.button_login.place(x=100, y=130, width=80, height=20)
 
     def login(self):
+        """
+        After click the login in button
+        :return:
+        """
+        # Checking ip format
         if not self.check_server_ip():
             messagebox.showerror(title='Error', message='Invalid ip address')
             return
+        # Gets the entered port number
         try:
             self.var_server_port.get()
         except tk.TclError:
             messagebox.showerror(title='Error', message='Empty port')
             return
+        # Check room name
         if self.var_room.get() == '':
             messagebox.showerror(title='Error', message='Empty room name')
             return
+        # Check the player username
         if self.var_player_name.get() == '':
             messagebox.showerror(title='Error', message='Empty name')
             return
+        # Create a socket to connect to the server
         self.client.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         player_name = self.var_player_name.get()
         room_name = self.var_room.get()
         try:
             self.client.client_socket.connect((self.var_server_ip.get(), self.var_server_port.get()))
-            # packet = struct.pack(f'>III{len(room_name)}s{len(player_name)}s', PacketType.LOGIN.value, len(room_name), len(player_name), room_name.encode('ASCII'), player_name.encode('ASCII'))
+            # Create a logged in packet
             packet = build_packet_header_client(PacketType.LOGIN.value, player_name, room_name)
+            # send it to the server
             self.client.client_socket.send(packet)
+            # receive from the server
             packet = self.client.client_socket.recv(1024)
+            # Extract the type and whether it is an administrator from the received packet
             packet_type, is_admin = struct.unpack('>Ic', packet[:5])
             is_admin = is_admin == b'A'
+            # If login succeeds
             if packet_type == PacketType.LOGIN_SUCCESS.value:
+                # Create player objects for client objects
                 self.client.player = Player(self.var_player_name.get(), self.var_room.get(), self.client.client_socket, None, is_admin)
+                # Remove the login dialog
                 self.root.destroy()
+            # If the room has started the game
             elif packet_type == PacketType.LOGIN_FAILED_GAME_STARTED.value:
                 messagebox.showerror(title='Error', message='The room has started the game')
                 return
+            # If the user name already exists
             elif packet_type == PacketType.LOGIN_FAILED_NAME_ALREADY_EXISTS.value:
                 messagebox.showerror(title='Error', message='The entered name already exists in the room')
                 return
+            # If the room is already full
             elif packet_type == PacketType.ROOM_ALREADY_FULL.value:
                 messagebox.showerror(title='Error', message='The room is already full')
                 return
-
+        # Failed to connect to server
         except ConnectionRefusedError:
             messagebox.showerror(title='Error', message='Failed to connect to the server')
             return

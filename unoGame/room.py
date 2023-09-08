@@ -212,8 +212,9 @@ class Room:
                 self.curr_player = self.get_next_player()
         else:
             assert is_wild_card(self.curr_card.id)
-            #
+            # if it's a wild card
             if self.curr_card.id == 80:
+
                 self.curr_card_color = card_color
                 self.curr_player = self.get_next_player()
             else:
@@ -263,6 +264,11 @@ class Room:
         self.curr_player.score += score
 
     def calculate_score_for_player(self, player):
+        """
+        Score for the player
+        :param player:
+        :return:
+        """
         score = 0
         for card in player.cards_in_hand:
             card_id = card.id
@@ -275,12 +281,20 @@ class Room:
         return score
 
     def check_500(self):
+        """
+        Check for players with scores over 500
+        :return:
+        """
         for player in self.players:
             if player.score >= 500:
                 return player
         return None
 
     def check_cards(self):
+        """
+        If the deck is empty, discard the deck except for the top one, shuffle it, and re-use it as the deck
+        :return:
+        """
         if len(self.cards) == 0:
             for card in self.discard_pile:
                 if card != self.curr_card:
